@@ -32,5 +32,5 @@
 ## Stack
 
 - **HTML5** — semantic markup
-- **Vanilla CSS** — design tokens from `packages/design-tokens/tokens.css`
+- **Vanilla CSS** — design tokens from `shared/design-tokens/tokens.css`
 - **Vanilla JS** — Kanban drag-and-drop, order status updates

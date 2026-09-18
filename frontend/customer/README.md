@@ -29,5 +29,5 @@ Browse Menu → Add to Cart → Review Cart → Checkout → WhatsApp Order Sent
 ## Stack
 
 - **HTML5** — semantic, accessible markup
-- **Vanilla CSS** — design tokens from `packages/design-tokens/tokens.css`
+- **Vanilla CSS** — design tokens from `shared/design-tokens/tokens.css`
 - **Vanilla JS** — cart logic, LocalStorage, WhatsApp deeplink
