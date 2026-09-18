@@ -5,26 +5,30 @@
 # Order matters: last matching pattern wins.
 # Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 # ============================================================
+#
+# Reviewer 1: @Rajal-ui
+# Reviewer 2: @piyushkrr24
+# ============================================================
 
 # --- Global fallback: all files ---
-*                               @Rajal-ui
+*                               @Rajal-ui @piyushkrr24
 
 # --- GitHub config & CI ---
-.github/                        @Rajal-ui
+.github/                        @Rajal-ui @piyushkrr24
 
 # --- Customer-facing frontend ---
-apps/customer/                  @Rajal-ui
+apps/customer/                  @Rajal-ui @piyushkrr24
 
 # --- Admin panel ---
-apps/admin/                     @Rajal-ui
+apps/admin/                     @Rajal-ui @piyushkrr24
 
 # --- Shared design tokens & packages ---
-packages/                       @Rajal-ui
+packages/                       @Rajal-ui @piyushkrr24
 
 # --- Documentation ---
-docs/                           @Rajal-ui
+docs/                           @Rajal-ui @piyushkrr24
 
 # --- Root config files ---
-*.json                          @Rajal-ui
-*.md                            @Rajal-ui
-.gitignore                      @Rajal-ui
+*.json                          @Rajal-ui @piyushkrr24
+*.md                            @Rajal-ui @piyushkrr24
+.gitignore                      @Rajal-ui @piyushkrr24
