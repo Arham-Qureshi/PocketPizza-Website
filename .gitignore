@@ -71,8 +71,8 @@ temp/
 
 # --- Design source files (binary — not diffable) ---
 # docs/ is NOT ignored — only binary design files inside it
-docs/*.fig
-docs/*.pdf
-docs/*.sketch
-docs/*.xd
-docs/POKKET_PIZZA_DESIGN_SPEC.md
+# docs/*.fig
+# docs/*.pdf
+# docs/*.sketch
+# docs/*.xd
+docs/
