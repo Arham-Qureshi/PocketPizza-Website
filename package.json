@@ -1,0 +1,17 @@
+{
+  "name": "pokket-pizza",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Pokket Pizza — Official Website Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:customer": "cd apps/customer && npx serve .",
+    "dev:admin": "cd apps/admin && npx serve ."
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
