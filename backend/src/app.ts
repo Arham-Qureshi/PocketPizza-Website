@@ -11,6 +11,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { sendSuccess } from './utils/response';
 import { ah } from './utils/async-handler';
 import { getPrisma } from './config/database';
+import { publicRouter } from './routes/public.routes';
 
 const app = express();
 
@@ -74,6 +75,8 @@ app.get(
     });
   }),
 );
+
+app.use('/api/v1', publicRouter);
 
 app.use(notFoundHandler);
 
