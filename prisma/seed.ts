@@ -1,4 +1,5 @@
-import "dotenv/config";
+import {config } from "dotenv";
+config({path: "backend/.env"});
 import { PrismaClient } from "../backend/src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import argon2 from "argon2";

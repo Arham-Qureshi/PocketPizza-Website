@@ -9,6 +9,9 @@ import { logger } from './utils/logger';
 import { globalRateLimit } from './middleware/rateLimit.middleware';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { sendSuccess } from './utils/response';
+import { ah } from './utils/async-handler';
+import { getPrisma } from './config/database';
+import { publicRouter } from './routes/public.routes';
 
 const app = express();
 
@@ -45,6 +48,35 @@ app.use(globalRateLimit);
 app.get('/health', (_req, res) => {
   sendSuccess(res, { status: 'ok' });
 });
+
+app.get(
+  '/health/db',
+  ah(async (_req, res) => {
+    const prisma = await getPrisma();
+
+    const restaurant = await prisma.restaurant.findFirst({
+      select: { id: true, name: true, phone: true },
+    });
+
+    const [categoryCount, menuItemCount, customerCount] = await Promise.all([
+      prisma.category.count(),
+      prisma.menuItem.count(),
+      prisma.customer.count(),
+    ]);
+
+    sendSuccess(res, {
+      connected: true,
+      restaurant,
+      counts: {
+        categories: categoryCount,
+        menuItems: menuItemCount,
+        customers: customerCount,
+      },
+    });
+  }),
+);
+
+app.use('/api/v1', publicRouter);
 
 app.use(notFoundHandler);
 
