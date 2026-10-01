@@ -3,6 +3,7 @@ import { ah } from '../../utils/async-handler';
 import { requireCustomer } from '../../middleware/auth.middleware';
 import {
   customerLoginIpRateLimit,
+  customerLoginPhoneRateLimit,
   customerLoginRateLimit,
   customerSignupRateLimit,
   refreshRateLimit,
@@ -21,6 +22,7 @@ customerAuthRouter.post('/signup', customerSignupRateLimit, ah(customerSignupCon
 customerAuthRouter.post(
   '/login',
   customerLoginIpRateLimit,
+  customerLoginPhoneRateLimit,
   customerLoginRateLimit,
   ah(customerLoginController),
 );

@@ -64,16 +64,21 @@ export const customerSignupRateLimit = rateLimit({
   handler: rateLimitBody('Too many signup attempts'),
 });
 
+// canonical limiter key for an account: digits only, last 10 — so
+// 9876543210 / +919876543210 / 09876543210 / "98765 43210" all share one
+// budget instead of each getting a fresh one
+export function phoneRateLimitKey(raw: unknown): string {
+  if (typeof raw !== 'string') return 'unknown';
+  const digits = raw.replace(/\D/g, '');
+  return digits.length > 0 ? digits.slice(-10) : 'unknown';
+}
+
 export const customerLoginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const raw = req.body?.phone;
-    const phone = typeof raw === 'string' ? raw.replace(/\D/g, '').slice(-10) : 'unknown';
-    return `${req.ip}:${phone}`;
-  },
+  keyGenerator: (req) => `${req.ip}:${phoneRateLimitKey(req.body?.phone)}`,
   handler: rateLimitBody('Too many login attempts'),
 });
 
@@ -82,5 +87,17 @@ export const customerLoginIpRateLimit = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitBody('Too many login attempts'),
+});
+
+// account-scoped: caps attempts against ONE phone regardless of how many
+// source IPs are used, so a botnet cannot fan out past the per-ip budgets
+// (OWASP: lockout counters must key on the account, not the source ip)
+export const customerLoginPhoneRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => phoneRateLimitKey(req.body?.phone),
   handler: rateLimitBody('Too many login attempts'),
 });
