@@ -55,3 +55,24 @@ export const refreshRateLimit = rateLimit({
   legacyHeaders: false,
   handler: rateLimitBody('Too many refresh attempts'),
 });
+
+export const customerSignupRateLimit = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitBody('Too many signup attempts'),
+});
+
+export const customerLoginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const raw = req.body?.phone;
+    const phone = typeof raw === 'string' ? raw.trim() : 'unknown';
+    return `${req.ip}:${phone}`;
+  },
+  handler: rateLimitBody('Too many login attempts'),
+});
