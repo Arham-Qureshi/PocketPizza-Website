@@ -5,13 +5,13 @@ import { env } from '../../config/env';
 import { AuthError, AuthInvalidError, RateLimitError } from '../../utils/errors';
 import { createChildLogger } from '../../utils/logger';
 import {
-  consumeRefreshToken,
   findAdminByEmail,
   findAdminById,
   findRefreshTokenByJti,
   insertRefreshToken,
   pruneExpiredRefreshTokens,
   revokeRefreshFamily,
+  rotateRefreshToken,
 } from './auth.repository';
 import {
   ACCESS_TOKEN_TYP,
@@ -167,25 +167,33 @@ export async function refreshSession(refreshToken: string): Promise<SessionRespo
   const admin = await findAdminById(claims.sub);
   if (!admin) throw new AuthError();
 
-  // atomic consume — 0 rows means a concurrent refresh won the race: revoke
-  if (!(await consumeRefreshToken(claims.jti))) {
-    await revokeRefreshFamily(row.familyId);
-    throw new AuthError();
-  }
-
+  // sign first (pure crypto, no DB): if signing fails, no row state changes
   const nextJti = randomUUID();
-  await insertRefreshToken({
+  const [accessToken, nextRefresh] = await Promise.all([
+    signAccessToken(admin),
+    signRefreshToken(admin, nextJti),
+  ]);
+
+  // consume + replacement insert in one family-locked transaction; rollback
+  // leaves the old token untouched so a plain retry still works
+  const rotated = await rotateRefreshToken(claims.jti, {
     jti: nextJti,
-    familyId: row.familyId,
     adminId: admin.id,
     expiresAt: newRefreshExpiry(),
   });
+  if (!rotated) {
+    const latest = await findRefreshTokenByJti(claims.jti);
+    if (latest && latest.usedAt && !latest.revokedAt) {
+      await revokeRefreshFamily(latest.familyId);
+      logger.warn(
+        { adminId: latest.adminId, familyId: latest.familyId },
+        'refresh token reuse detected; family revoked',
+      );
+    }
+    throw new AuthError();
+  }
 
-  return {
-    accessToken: await signAccessToken(admin),
-    refreshToken: await signRefreshToken(admin, nextJti),
-    admin: toLoginAdmin(admin),
-  };
+  return { accessToken, refreshToken: nextRefresh, admin: toLoginAdmin(admin) };
 }
 
 // best-effort server-side logout: revoke the presented refresh token's family
