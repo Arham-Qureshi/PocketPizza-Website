@@ -66,8 +66,10 @@ model RefreshToken {
   id        String    @id @default(cuid())
   jti       String    @unique
   familyId  String
-  adminId   String
-  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   usedAt    DateTime?
   revokedAt DateTime?
@@ -141,8 +143,13 @@ model Customer {
   name  String
   phone String @unique
 
+  email        String? @unique
+  passwordHash String?
+
   addresses Address[]
   orders    Order[]
+
+  refreshTokens RefreshToken[]
 
   createdAt DateTime @default(now())
 }
