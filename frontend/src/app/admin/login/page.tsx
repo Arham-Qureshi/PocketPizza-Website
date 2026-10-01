@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { useAdminLogin } from "@/lib/api/auth";
+import { useAdminLogin, useAdminSession } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -16,9 +16,15 @@ import { Card, ErrorState } from "@/components/ui/LayoutPrimitives";
 export default function AdminLoginPage() {
   const router = useRouter();
   const login = useAdminLogin();
+  const session = useAdminSession();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+
+  // Already signed in (e.g. back-button after login): skip the form.
+  React.useEffect(() => {
+    if (session.data?.ok === true) router.replace("/admin/dashboard");
+  }, [session.data, router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

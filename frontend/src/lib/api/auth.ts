@@ -20,12 +20,18 @@ export type AdminMe = {
  */
 
 export function useAdminLogin() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: LoginRequest) =>
       apiFetch<{ admin: AdminMe }>("/auth/login", {
         method: "POST",
         body: JSON.stringify(body),
       }),
+    // Drop any cached logged-out session so the dashboard guard refetches
+    // fresh after login instead of bouncing back on stale { ok: false }.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "session"] });
+    },
   });
 }
 
