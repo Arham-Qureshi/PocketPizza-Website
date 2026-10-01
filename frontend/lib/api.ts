@@ -90,9 +90,26 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     url,
   });
 
+  const code = errorEnvelope?.error?.code ?? "INTERNAL_ERROR";
+  const message = errorEnvelope?.error?.message || `Request failed (HTTP ${res.status}).`;
+
+  // Global 401 Interceptor: If we get a genuine authentication failure from any admin API call,
+  // we perform a hard redirect to the login page. A hard redirect (window.location.href) 
+  // automatically clears all in-memory local state (React Query cache, etc.) and ensures a clean slate.
+  if (
+    res.status === 401 &&
+    (code === "AUTHENTICATION_REQUIRED" || code === "AUTHENTICATION_INVALID")
+  ) {
+    if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
+      const redirectTo = window.location.pathname + window.location.search + window.location.hash;
+      window.location.href = `/admin/login?reason=expired&redirectTo=${encodeURIComponent(redirectTo)}`;
+      // We still throw to prevent the caller from continuing execution
+    }
+  }
+
   throw new ApiError({
-    code: errorEnvelope?.error?.code ?? "INTERNAL_ERROR",
-    message: errorEnvelope?.error?.message || `Request failed (HTTP ${res.status}).`,
+    code,
+    message,
     status: res.status,
     details: errorEnvelope?.error?.details,
     requestId,
