@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminLogin } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,16 @@ import { Card, ErrorState } from "@/components/ui/LayoutPrimitives";
  * No token in JS, no localStorage. Rate-limited 10/15min (§20.5).
  */
 export default function AdminLoginPage() {
+  return (
+    <React.Suspense fallback={<p className="p-6 text-body text-bodySecondary">Loading login…</p>}>
+      <LoginForm />
+    </React.Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const login = useAdminLogin();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -29,7 +38,12 @@ export default function AdminLoginPage() {
         email: email.trim().toLowerCase(),
         password,
       });
-      router.push("/admin/dashboard");
+      const redirectTo = searchParams.get("redirectTo");
+      const destination =
+        redirectTo === "/admin" || redirectTo?.startsWith("/admin/")
+          ? redirectTo
+          : "/admin/dashboard";
+      router.push(destination);
     } catch (err) {
       const api = err as ApiError;
       if (api?.status === 429) {
