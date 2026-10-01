@@ -270,11 +270,17 @@ export async function customerSignup(
   // claim a guest row (created by an earlier guest checkout): keep the stored
   // name (first-writer-wins, consistent with checkout) — no OTP proof of phone
   // possession exists in MVP scope, documented tradeoff
-  const claimed = await setCustomerCredential({
-    id: account.id,
-    passwordHash: await argon2.hash(input.password),
-    email,
-  });
+  let claimed: boolean;
+  try {
+    claimed = await setCustomerCredential({
+      id: account.id,
+      passwordHash: await argon2.hash(input.password),
+      email,
+    });
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err;
+    throw new AppError('EMAIL_EXISTS', 'This email address is already registered.', 409);
+  }
   if (!claimed) {
     throw new AppError(
       'ACCOUNT_EXISTS',
