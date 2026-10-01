@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ah } from '../../utils/async-handler';
 import { requireCustomer } from '../../middleware/auth.middleware';
 import {
+  customerLoginIpRateLimit,
   customerLoginRateLimit,
   customerSignupRateLimit,
   refreshRateLimit,
@@ -17,7 +18,12 @@ import {
 export const customerAuthRouter = Router();
 
 customerAuthRouter.post('/signup', customerSignupRateLimit, ah(customerSignupController));
-customerAuthRouter.post('/login', customerLoginRateLimit, ah(customerLoginController));
+customerAuthRouter.post(
+  '/login',
+  customerLoginIpRateLimit,
+  customerLoginRateLimit,
+  ah(customerLoginController),
+);
 customerAuthRouter.post('/refresh', refreshRateLimit, ah(customerRefreshController));
 customerAuthRouter.post('/logout', ah(customerLogoutController));
 customerAuthRouter.get('/me', requireCustomer, ah(customerMeController));

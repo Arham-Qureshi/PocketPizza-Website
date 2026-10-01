@@ -71,8 +71,16 @@ export const customerLoginRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => {
     const raw = req.body?.phone;
-    const phone = typeof raw === 'string' ? raw.trim() : 'unknown';
+    const phone = typeof raw === 'string' ? raw.replace(/\D/g, '').slice(-10) : 'unknown';
     return `${req.ip}:${phone}`;
   },
+  handler: rateLimitBody('Too many login attempts'),
+});
+
+export const customerLoginIpRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   handler: rateLimitBody('Too many login attempts'),
 });
