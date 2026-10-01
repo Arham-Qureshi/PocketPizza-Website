@@ -73,6 +73,16 @@ export function phoneRateLimitKey(raw: unknown): string {
   return digits.length > 0 ? digits.slice(-10) : 'unknown';
 }
 
+// All login limiters count FAILED attempts only (skipSuccessfulRequests → any
+// response < 400 is uncounted). Brute force is a stream of failures, so this is
+// the signal worth capping, while a customer who simply logs in successfully —
+// repeatedly, behind CGNAT/shared wifi, or via an app retry loop — is never
+// throttled. Raw request volume stays bounded by globalRateLimit.
+// Residual, accepted: if an attacker burns an account's failure budget from many
+// IPs, the rightful owner is throttled until the window expires. No limiter can
+// distinguish the two; account unlock/recovery is the real remedy (post-MVP).
+const COUNT_FAILURES_ONLY = { skipSuccessfulRequests: true } as const;
+
 export const customerLoginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
@@ -80,6 +90,7 @@ export const customerLoginRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => `${req.ip}:${phoneRateLimitKey(req.body?.phone)}`,
   handler: rateLimitBody('Too many login attempts'),
+  ...COUNT_FAILURES_ONLY,
 });
 
 export const customerLoginIpRateLimit = rateLimit({
@@ -88,6 +99,7 @@ export const customerLoginIpRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitBody('Too many login attempts'),
+  ...COUNT_FAILURES_ONLY,
 });
 
 // account-scoped: caps attempts against ONE phone regardless of how many
@@ -100,4 +112,5 @@ export const customerLoginPhoneRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => phoneRateLimitKey(req.body?.phone),
   handler: rateLimitBody('Too many login attempts'),
+  ...COUNT_FAILURES_ONLY,
 });
