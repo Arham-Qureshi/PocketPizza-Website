@@ -5,6 +5,11 @@ export const COOKIE_ADMIN_REFRESH = '__Host-admin_refresh';
 export const ACCESS_TOKEN_TYP = 'admin-access';
 export const REFRESH_TOKEN_TYP = 'admin-refresh';
 
+export const COOKIE_CUSTOMER_ACCESS = '__Host-customer_access';
+export const COOKIE_CUSTOMER_REFRESH = '__Host-customer_refresh';
+export const CUSTOMER_ACCESS_TOKEN_TYP = 'customer-access';
+export const CUSTOMER_REFRESH_TOKEN_TYP = 'customer-refresh';
+
 export type AuthPrincipal = {
   id: string;
   restaurantId: string;
@@ -45,11 +50,57 @@ export type RefreshTokenClaims = {
 export type RefreshTokenRow = {
   jti: string;
   familyId: string;
-  adminId: string;
+  adminId: string | null;
+  customerId: string | null;
   usedAt: Date | null;
   revokedAt: Date | null;
   expiresAt: Date;
 };
+
+export type CustomerPrincipal = {
+  id: string;
+  restaurantId: string;
+};
+
+export type CustomerRow = {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  passwordHash: string | null;
+  restaurantId: string;
+};
+
+export type CustomerAccessClaims = {
+  sub: string;
+  iss: string;
+  aud: string;
+  typ: typeof CUSTOMER_ACCESS_TOKEN_TYP;
+  restaurantId: string;
+  jti: string;
+  iat?: number;
+  exp?: number;
+};
+
+export type CustomerRefreshTokenClaims = {
+  sub: string;
+  iss: string;
+  aud: string;
+  typ: typeof CUSTOMER_REFRESH_TOKEN_TYP;
+  jti: string;
+  iat?: number;
+  exp?: number;
+};
+
+// Preference defaults served by GET /me until #45 persists them;
+// single source reused by the customer module then.
+export const DEFAULT_CUSTOMER_PREFERENCES = {
+  whatsappOrderUpdates: true,
+  whatsappStatusUpdates: true,
+  theme: 'system',
+} as const;
+
+export type CustomerPreferences = typeof DEFAULT_CUSTOMER_PREFERENCES;
 
 export type { LoginRequest, LoginResponse };
 
@@ -57,6 +108,7 @@ declare global {
   namespace Express {
     interface Request {
       admin?: AuthPrincipal;
+      customer?: CustomerPrincipal;
     }
   }
 }
