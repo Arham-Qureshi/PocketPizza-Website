@@ -44,14 +44,30 @@ export type SuccessEnvelope<T> = {
 // is rejected at the API boundary rather than leaking to the frontend.
 export const openingHoursEntrySchema = z.object({
   label: z.string().min(1).max(50),
-  opens: z.string().regex(/^\d{2}:\d{2}$/, 'must be HH:MM 24-hour'),
-  closes: z.string().regex(/^\d{2}:\d{2}$/, 'must be HH:MM 24-hour'),
+  opens: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM 24-hour'),
+  closes: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM 24-hour'),
 });
 export type OpeningHoursEntry = z.infer<typeof openingHoursEntrySchema>;
 
 export const socialLinkSchema = z.object({
   platform: z.enum(['instagram', 'facebook', 'x', 'whatsapp', 'website']),
-  url: z.string().url().max(500),
+  // url() alone accepts any scheme (javascript:, data:) and this value is rendered
+  // into an href, so pin the protocol and require a parseable hostname.
+  url: z
+    .string()
+    .url()
+    .max(500)
+    .refine(
+      (value) => {
+        try {
+          const { protocol, hostname } = new URL(value);
+          return (protocol === 'https:' || protocol === 'http:') && hostname.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      { message: 'must be an http(s) URL' },
+    ),
 });
 export type SocialLink = z.infer<typeof socialLinkSchema>;
 
