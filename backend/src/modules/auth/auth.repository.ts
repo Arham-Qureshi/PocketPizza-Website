@@ -26,6 +26,9 @@ const customerSelect = {
   phone: true,
   email: true,
   restaurantId: true,
+  whatsappOrderUpdates: true,
+  whatsappStatusUpdates: true,
+  theme: true,
 } as const;
 
 const customerAuthSelect = {
