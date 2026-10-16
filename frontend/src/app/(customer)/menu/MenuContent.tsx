@@ -38,7 +38,7 @@ export function MenuContent() {
       </section>
 
       {/* Main Layout Grid */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         {/* Category Navigation */}
         {categories && (
           <CategoryNav
