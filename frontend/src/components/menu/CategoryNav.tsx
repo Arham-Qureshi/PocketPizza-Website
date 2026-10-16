@@ -17,7 +17,7 @@ export const CategoryNav: React.FC<CategoryNavProps> = ({
 }) => {
   const sorted = [...categories].sort((a, b) => a.sortOrder - b.sortOrder);
   return (
-    <nav className="w-full lg:w-64 flex-shrink-0">
+    <nav className="w-full lg:w-64 flex-shrink-0 sticky top-16 lg:top-20">
       {/* Mobile & Tablet: Horizontal Scrollable Chips */}
       <div className="flex lg:hidden overflow-x-auto gap-2 pb-2 scrollbar-none no-scrollbar -mx-4 px-4 sticky top-16 bg-cream-bg/95 backdrop-blur z-30 pt-2 border-b border-border-default">
         <button

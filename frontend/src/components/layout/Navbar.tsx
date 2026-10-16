@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useCartHydrated, useCartStore } from "@/lib/cart/store";
 import { useCustomerLogout, useCustomerSession } from "@/lib/api/customerAuth";
@@ -34,6 +34,24 @@ function BagIcon({ className }: { className?: string }) {
   );
 }
 
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -46,8 +64,29 @@ export default function Navbar() {
   const logout = useCustomerLogout();
   const toast = useToast();
   const customer = session.data?.loggedIn ? session.data.customer : null;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     try {
       await logout.mutateAsync();
       router.replace("/");
@@ -94,7 +133,80 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          {customer ? (
+            <div ref={profileRef} className="relative">
+              <button
+                type="button"
+                aria-label="Profile"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((v) => !v)}
+                className="grid h-11 w-11 place-items-center rounded-full text-charcoal transition-colors hover:bg-neutralTint focus:outline-none focus:ring-2 focus:ring-brand-red"
+              >
+                <span
+                  className="grid h-7 w-7 place-items-center rounded-full bg-blushTint font-heading text-xs font-bold text-brand-red"
+                  aria-hidden="true"
+                >
+                  {customer.name.trim().charAt(0).toUpperCase()}
+                </span>
+              </button>
+              {menuOpen && (
+                <div
+                  role="menu"
+                  aria-label="Profile"
+                  className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-md border border-border-default bg-white py-1 shadow-elevated"
+                >
+                  <div className="border-b border-border-default px-3 py-2">
+                    <p className="truncate font-heading text-label font-semibold text-charcoal">
+                      {customer.name}
+                    </p>
+                    <p className="truncate text-caption text-bodySecondary">{customer.phone}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      router.push("/profile");
+                    }}
+                    className="w-full px-3 py-2.5 text-left text-sm font-medium text-charcoal hover:bg-neutralTint focus-visible:bg-neutralTint focus:outline-none"
+                  >
+                    Profile
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      router.push("/settings");
+                    }}
+                    className="w-full px-3 py-2.5 text-left text-sm font-medium text-charcoal hover:bg-neutralTint focus-visible:bg-neutralTint focus:outline-none"
+                  >
+                    Settings
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                    className="w-full px-3 py-2.5 text-left text-sm font-medium text-charcoal hover:bg-neutralTint focus-visible:bg-neutralTint focus:outline-none disabled:opacity-50"
+                  >
+                    {logout.isPending ? "Logging out…" : "Log out"}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+          {customer ? (
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              className="grid h-11 w-11 place-items-center rounded-full text-charcoal transition-colors hover:bg-neutralTint focus:outline-none focus:ring-2 focus:ring-brand-red"
+            >
+              <SettingsIcon className="h-5 w-5" />
+            </Link>
+          ) : null}
           <Link
             href="/cart"
             aria-label={hasHydrated ? `Cart (${cartCount})` : "Cart"}
@@ -103,16 +215,7 @@ export default function Navbar() {
             <BagIcon className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{hasHydrated ? `Cart (${cartCount})` : "Cart"}</span>
           </Link>
-          {customer ? (
-            <div className="flex items-center gap-1 sm:gap-2">
-              <span title={customer.name} aria-label={customer.name} className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-blushTint font-heading text-xs font-bold text-brand-red">
-                {customer.name.trim().charAt(0).toUpperCase()}
-              </span>
-              <button type="button" onClick={handleLogout} disabled={logout.isPending} className="whitespace-nowrap rounded-md px-1.5 py-2 text-[11px] font-semibold text-charcoal hover:text-brand-red disabled:opacity-50 sm:px-2 sm:text-xs">
-                {logout.isPending ? "…" : "Log out"}
-              </button>
-            </div>
-          ) : (
+          {!customer && (
             <Link href="/login" className="whitespace-nowrap rounded-md px-1.5 py-2 text-xs font-semibold text-charcoal hover:text-brand-red sm:px-2">
               Log in
             </Link>
@@ -142,7 +245,15 @@ export default function Navbar() {
           className="flex flex-col gap-1 border-t border-border-default bg-white px-5 py-3 md:hidden"
           aria-label="Mobile"
         >
-          {links.map((l) => (
+          {[
+            ...(customer
+              ? [
+                  { href: "/profile", label: "Profile" },
+                  { href: "/settings", label: "Settings" },
+                ]
+              : []),
+            ...links,
+          ].map((l) => (
             <Link
               key={l.label}
               href={l.href}
