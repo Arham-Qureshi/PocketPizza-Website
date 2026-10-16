@@ -13,11 +13,12 @@ import { ah } from './utils/async-handler';
 import { getPrisma } from './config/database';
 import { menuRouter } from './modules/menu/menu.routes';
 import { authRouter } from './modules/auth/auth.routes';
-import { requireAdmin } from './middleware/auth.middleware';
+import { requireAdmin, requireCustomer } from './middleware/auth.middleware';
 import { adminRouter } from './modules/admin/admin.routes';
 import { orderRouter } from './modules/orders/order.routes';
 import { restaurantRouter } from './modules/restaurant/restaurant.routes';
 import { twilioWebhookRouter } from './modules/notifications/notification.routes';
+import { customerRouter } from './modules/customer/customer.routes';
 
 // access logs must never carry capability tokens: publicToken sits in the
 // path (/orders/:token[/invoice]) and legacy links put it in ?token=.
@@ -122,6 +123,7 @@ app.get(
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', requireAdmin, adminRouter);
+app.use('/api/v1/customer', requireCustomer, customerRouter);
 app.use('/api/v1', menuRouter);
 app.use('/api/v1', orderRouter);
 app.use('/api/v1', restaurantRouter);
