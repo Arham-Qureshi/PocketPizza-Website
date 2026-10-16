@@ -27,16 +27,6 @@ export function MenuContent() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Intro banner */}
-      <section className="rounded-2xl bg-white p-5 shadow-card ring-1 ring-border-default md:p-6">
-        <h1 className="font-heading font-extrabold text-h2 md:text-h1 text-charcoal">
-          Freshly Baked Pizzas & Sides
-        </h1>
-        <p className="mt-1 text-body text-bodySecondary">
-          Handcrafted dough, rich San Marzano tomato sauce, and hot ingredients delivered fast.
-        </p>
-      </section>
-
       {/* Main Layout Grid */}
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         {/* Category Navigation */}
