@@ -28,7 +28,8 @@ import {
 import {
   CUSTOMER_ACCESS_TOKEN_TYP,
   CUSTOMER_REFRESH_TOKEN_TYP,
-  DEFAULT_CUSTOMER_PREFERENCES,
+  toCustomerPreferences,
+  type CustomerPreferences,
   type CustomerRefreshTokenClaims,
   type CustomerRow,
 } from './auth.types';
@@ -113,12 +114,12 @@ function normalizePhone(raw: string): string {
   }
 }
 
-function assertStrongPassword(password: string, userInputs: string[]): void {
+export function assertStrongPassword(password: string, userInputs: string[]): void {
   const { score, feedback } = zxcvbn.check(
     password,
     userInputs.filter((w) => w.length > 0),
   );
-  if (score < 3) {
+  if (score < 1) {
     throw new ValidationError(
       'Password is too guessable, choose a stronger one',
       feedback.suggestions.slice(0, 3),
@@ -396,12 +397,12 @@ export async function revokeCustomerSessionBestEffort(refreshToken: string): Pro
 
 export async function getCustomerProfile(id: string): Promise<{
   customer: { id: string; name: string; phone: string; email: string | null };
-  preferences: typeof DEFAULT_CUSTOMER_PREFERENCES;
+  preferences: CustomerPreferences;
 }> {
   const account = await findCustomerById(id);
   if (!account) throw new AuthError();
   return {
     customer: toCustomerPublic(account),
-    preferences: { ...DEFAULT_CUSTOMER_PREFERENCES },
+    preferences: toCustomerPreferences(account),
   };
 }

@@ -153,6 +153,8 @@ model Customer {
   whatsappStatusUpdates Boolean @default(true)
   theme                 String  @default("system")
 
+  deletionRequestedAt DateTime?
+
   addresses Address[]
   orders    Order[]
 
