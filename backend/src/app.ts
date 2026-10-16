@@ -20,11 +20,14 @@ import { restaurantRouter } from './modules/restaurant/restaurant.routes';
 import { twilioWebhookRouter } from './modules/notifications/notification.routes';
 
 // access logs must never carry capability tokens: publicToken sits in the
-// path (/orders/:token[/invoice]) and legacy links put it in ?token=
+// path (/orders/:token[/invoice]) and legacy links put it in ?token=.
+// Phone numbers ride the same router (/orders/phone/:phone) and are PII — the
+// phone rule runs last, after the token rule has spared the literal segment.
 function sanitizeLogUrl(url: string | undefined): string | undefined {
   if (!url) return url;
   return url
-    .replace(/\/orders\/(?!quote(?:[/?#]|$))[^/?#]+/g, '/orders/[redacted]')
+    .replace(/\/orders\/(?!quote(?:[/?#]|$)|phone(?:[/?#]|$))[^/?#]+/g, '/orders/[redacted]')
+    .replace(/\/orders\/phone\/[^/?#]+/g, '/orders/phone/[redacted]')
     .replace(/([?&]token=)[^&]+/gi, '$1[redacted]');
 }
 

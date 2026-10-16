@@ -6,6 +6,7 @@ import {
   getAdminOrderDetail,
   getInvoice,
   getOrderStatus,
+  getOrdersByPhone,
   listAdminOrders,
   quoteOrder,
   updateAdminOrderStatus,
@@ -13,6 +14,8 @@ import {
 import {
   adminOrderIdParamSchema,
   createOrderSchema,
+  parsePhoneParam,
+  phoneOrderListQuerySchema,
   publicTokenParamSchema,
   quoteSchema,
 } from './order.validation';
@@ -36,6 +39,14 @@ export async function getOrderController(req: Request, res: Response): Promise<v
 export async function getInvoiceController(req: Request, res: Response): Promise<void> {
   const { publicToken } = publicTokenParamSchema.parse(req.params);
   sendSuccess(res, await getInvoice(publicToken));
+}
+
+// Phone and query are validated before any DB access: a malformed number is a
+// 400, an unknown-but-valid one is an empty 200 (issue #43 testing notes).
+export async function getOrdersByPhoneController(req: Request, res: Response): Promise<void> {
+  const phone = parsePhoneParam(req.params.phone);
+  const query = phoneOrderListQuerySchema.parse(req.query);
+  sendSuccess(res, await getOrdersByPhone(phone, query));
 }
 
 export async function listAdminOrdersController(req: Request, res: Response): Promise<void> {
