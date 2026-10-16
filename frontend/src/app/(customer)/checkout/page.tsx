@@ -28,6 +28,7 @@ import { useOrderQuote } from "@/hooks/useOrderQuote";
 
 import { Button } from "@/components/ui/Button";
 import { Card, ErrorState } from "@/components/ui/LayoutPrimitives";
+import { CustomerGate } from "@/components/auth/CustomerGate";
 import { OrderTypeSelector } from "@/components/cart/OrderTypeSelector";
 import { CartLineRow } from "@/components/cart/CartLineRow";
 import { NumericField, TextField } from "@/components/form/TextField";
@@ -51,7 +52,18 @@ import { QuoteSummary } from "@/components/quote/QuoteSummary";
  * shown the new figure and asked to confirm it with a second press, so a stale
  * price can never be silently charged.
  */
+// Orders can only be placed by a signed-in customer — the page is gated so a
+// visitor bounces through /login (with `redirectTo` back here) before the
+// form ever renders.
 export default function CheckoutPage() {
+  return (
+    <CustomerGate returnTo="/checkout">
+      <CheckoutContent />
+    </CustomerGate>
+  );
+}
+
+function CheckoutContent() {
   const router = useRouter();
   const hasHydrated = useCartHydrated();
   const lines = useCartStore((s) => s.lines);

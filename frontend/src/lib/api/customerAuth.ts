@@ -15,7 +15,7 @@ export type CustomerPublic = {
 export type CustomerPreferences = {
   whatsappOrderUpdates: boolean;
   whatsappStatusUpdates: boolean;
-  theme: "system";
+  theme: "system" | "light" | "dark";
 };
 
 export type CustomerSignupRequest = {
@@ -42,7 +42,7 @@ type CustomerAuthResponse = {
 const CUSTOMER_SESSION_KEY = ["customer", "session"] as const;
 
 type CustomerSessionResult =
-  | { loggedIn: true; customer: CustomerPublic }
+  | { loggedIn: true; customer: CustomerPublic; preferences: CustomerPreferences }
   | { loggedIn: false };
 
 async function fetchCustomerSession(): Promise<CustomerSessionResult> {
@@ -51,6 +51,7 @@ async function fetchCustomerSession(): Promise<CustomerSessionResult> {
     return {
       loggedIn: true,
       customer: session.customer,
+      preferences: session.preferences,
     };
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
