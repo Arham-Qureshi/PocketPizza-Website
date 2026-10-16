@@ -2,6 +2,8 @@ import type { OrderStatus, OrderType } from '@pokket-pizza/contract/contract';
 import { getPrisma } from '../../config/database';
 import { AppError, BusinessRuleError } from '../../utils/errors';
 import { isTransitionAllowed } from './order.validation';
+import type { OrderPhoneCursor } from './order.types';
+import type { Prisma } from '../../generated/prisma/client';
 
 export async function findQuoteItems(ids: string[], restaurantId: string) {
   const prisma = await getPrisma();
@@ -155,6 +157,107 @@ export async function findOrderByToken(publicToken: string) {
       },
     },
   });
+}
+
+const CURRENT_ORDER_STATUSES: OrderStatus[] = [
+  'NEW',
+  'CONFIRMED',
+  'PREPARING',
+  'READY',
+  'OUT_FOR_DELIVERY',
+];
+const PAST_ORDER_STATUSES: OrderStatus[] = ['COMPLETED', 'CANCELLED'];
+
+// Summary-only projection for the customer phone lookup (issue #43): totals
+// and status, never name/phone/address — the caller already knows the phone.
+const phoneOrderSelect = {
+  id: true,
+  orderNumber: true,
+  publicToken: true,
+  status: true,
+  orderType: true,
+  total: true,
+  createdAt: true,
+  items: { select: { quantity: true } },
+} as const;
+
+type PhoneOrderRow = Prisma.OrderGetPayload<{ select: typeof phoneOrderSelect }>;
+
+/**
+ * Current orders first, terminal ones after, newest first inside each group
+ * (issue #43). Two grouped queries instead of one: Prisma cannot order by a
+ * computed "is terminal" flag, and re-sorting after a LIMIT would push old
+ * but still-active orders off the page.
+ *
+ * `limit + 1` rows are read to detect a next page without a COUNT; the cursor
+ * position is (group, createdAt, id) so a page boundary stays stable even when
+ * two orders share a createdAt millisecond.
+ */
+export async function findOrdersByPhone(
+  phone: string,
+  limit: number,
+  cursor: OrderPhoneCursor | null,
+): Promise<{ rows: PhoneOrderRow[]; nextCursor: OrderPhoneCursor | null }> {
+  const prisma = await getPrisma();
+  const take = limit + 1;
+  const orderBy: Prisma.OrderOrderByWithRelationInput[] = [
+    { createdAt: 'desc' },
+    { id: 'desc' },
+  ];
+
+  const strictlyAfter = (pos: OrderPhoneCursor) => ({
+    OR: [
+      { createdAt: { lt: pos.createdAt } },
+      { createdAt: pos.createdAt, id: { lt: pos.id } },
+    ],
+  });
+
+  const rows: PhoneOrderRow[] = [];
+
+  // group 0 = current: resume mid-group when a cursor says so; group 1 means
+  // the previous page already exhausted the current group, so skip straight
+  // to terminal orders.
+  if (!cursor || cursor.group === 0) {
+    const current = await prisma.order.findMany({
+      where: {
+        customer: { phone },
+        status: { in: CURRENT_ORDER_STATUSES },
+        ...(cursor ? strictlyAfter(cursor) : {}),
+      },
+      select: phoneOrderSelect,
+      orderBy,
+      take,
+    });
+    rows.push(...current);
+  }
+
+  if (rows.length < take) {
+    const past = await prisma.order.findMany({
+      where: {
+        customer: { phone },
+        status: { in: PAST_ORDER_STATUSES },
+        ...(cursor && cursor.group === 1 ? strictlyAfter(cursor) : {}),
+      },
+      select: phoneOrderSelect,
+      orderBy,
+      take: take - rows.length,
+    });
+    rows.push(...past);
+  }
+
+  const hasMore = rows.length > limit;
+  const page = hasMore ? rows.slice(0, limit) : rows;
+  const last = page[page.length - 1];
+  const nextCursor: OrderPhoneCursor | null =
+    hasMore && last
+      ? {
+          group: PAST_ORDER_STATUSES.includes(last.status) ? 1 : 0,
+          createdAt: last.createdAt,
+          id: last.id,
+        }
+      : null;
+
+  return { rows: page, nextCursor };
 }
 
 const adminOrderSummarySelect = {
