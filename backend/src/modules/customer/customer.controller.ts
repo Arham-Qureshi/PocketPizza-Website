@@ -3,6 +3,7 @@ import {
   addressIdParamSchema,
   changePasswordSchema,
   createAddressSchema,
+  preferencesUpdateSchema,
   updateAddressSchema,
   updateProfileSchema,
 } from './customer.validation';
@@ -11,9 +12,11 @@ import {
   changePassword,
   createAddress,
   deleteAddress,
+  getPreferences,
   getProfile,
   listAddresses,
   patchAddress,
+  patchPreferences,
   patchProfile,
   requestDeletion,
 } from './customer.service';
@@ -33,6 +36,17 @@ export async function patchProfileController(req: Request, res: Response): Promi
 export async function listAddressesController(req: Request, res: Response): Promise<void> {
   res.setHeader('Cache-Control', 'no-store');
   sendSuccess(res, await listAddresses(req.customer!.id));
+}
+
+export async function getPreferencesController(req: Request, res: Response): Promise<void> {
+  res.setHeader('Cache-Control', 'no-store');
+  sendSuccess(res, await getPreferences(req.customer!.id));
+}
+
+export async function patchPreferencesController(req: Request, res: Response): Promise<void> {
+  const body = preferencesUpdateSchema.parse(req.body);
+  res.setHeader('Cache-Control', 'no-store');
+  sendSuccess(res, await patchPreferences(req.customer!.id, body));
 }
 
 export async function createAddressController(req: Request, res: Response): Promise<void> {

@@ -5,9 +5,11 @@ import {
   changePasswordController,
   createAddressController,
   deleteAddressController,
+  getPreferencesController,
   getProfileController,
   listAddressesController,
   patchAddressController,
+  patchPreferencesController,
   patchProfileController,
   requestDeletionController,
 } from './customer.controller';
@@ -17,6 +19,9 @@ export const customerRouter = Router();
 
 customerRouter.get('/me', ah(getProfileController));
 customerRouter.patch('/me', ah(patchProfileController));
+
+customerRouter.get('/me/preferences', ah(getPreferencesController));
+customerRouter.patch('/me/preferences', ah(patchPreferencesController));
 
 customerRouter.get('/me/addresses', ah(listAddressesController));
 customerRouter.post('/me/addresses', ah(createAddressController));
