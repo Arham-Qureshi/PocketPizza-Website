@@ -19,6 +19,7 @@ import {
 import type {
   ChangePasswordInput,
   CreateAddressInput,
+  PreferencesUpdateInput,
   UpdateAddressInput,
   UpdateProfileInput,
 } from './customer.validation';
@@ -122,6 +123,26 @@ export async function patchProfile(
 export async function listAddresses(customerId: string): Promise<{ addresses: AddressResponse[] }> {
   const rows = await listAddressRows(customerId);
   return { addresses: rows.map(toAddress) };
+}
+
+// Dedicated /me/preferences endpoints (issue #45); PATCH /me accepts the same
+// preference keys, these are the explicit read/write surface the issue names.
+export async function getPreferences(
+  customerId: string,
+): Promise<{ preferences: CustomerPreferences }> {
+  const row = await loadProfile(customerId);
+  return { preferences: toCustomerPreferences(row) };
+}
+
+export async function patchPreferences(
+  customerId: string,
+  body: PreferencesUpdateInput,
+): Promise<{ preferences: CustomerPreferences }> {
+  if (Object.keys(body).length === 0) {
+    throw new ValidationError('Validation failed', ['body: at least one preference is required']);
+  }
+  const row = await updateCustomerProfile(customerId, body);
+  return { preferences: toCustomerPreferences(row) };
 }
 
 export async function createAddress(
