@@ -70,7 +70,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   try {
     json = (await res.json()) as SuccessEnvelope<T> | ErrorEnvelope;
   } catch {
-    console.error(`[API Client] Invalid JSON response (HTTP ${res.status}) from ${url}`);
+    console.error(`[API Client] Invalid JSON response (HTTP ${res.status}) from ${url.replace(/\d{10}/g, "[phone]")}`);
     throw new ApiError({
       code: "INTERNAL_ERROR",
       message: `Unexpected response format (HTTP ${res.status}).`,
@@ -91,7 +91,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     message,
     details: errorEnvelope?.error?.details,
     status: res.status,
-    url,
+    url: url.replace(/\d{10}/g, "[phone]"),
   };
 
   // 401s are an expected outcome (e.g. the admin session probe before login)
@@ -107,6 +107,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   // automatically clears all in-memory local state (React Query cache, etc.) and ensures a clean slate.
   if (
     res.status === 401 &&
+    (cleanPath === "/admin" || cleanPath.startsWith("/admin/")) &&
     (code === "AUTHENTICATION_REQUIRED" || code === "AUTHENTICATION_INVALID")
   ) {
     if (typeof window !== "undefined" && window.location.pathname !== "/admin/login") {
