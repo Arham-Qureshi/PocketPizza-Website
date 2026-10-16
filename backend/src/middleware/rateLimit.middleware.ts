@@ -48,6 +48,29 @@ export const tokenLookupRateLimit = rateLimit({
   handler: rateLimitBody('Too many order lookup attempts'),
 });
 
+// GET /orders/phone/:phone is enumerable by phone number, so two budgets:
+// one on the caller's IP (caps how fast any host can sweep numbers) and one
+// per phone *scoped to that IP* (stops hammering a single number). Keying the
+// phone budget on the phone alone would let anyone burn a victim's budget and
+// hide their own order list, so it deliberately stays IP-scoped. Every request
+// counts here — these are reads, there is no "failure" to isolate.
+export const phoneOrdersIpRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitBody('Too many order lookup attempts'),
+});
+
+export const phoneOrdersPhoneRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => `${req.ip}:${phoneRateLimitKey(req.params.phone)}`,
+  handler: rateLimitBody('Too many order lookup attempts'),
+});
+
 export const refreshRateLimit = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 30,

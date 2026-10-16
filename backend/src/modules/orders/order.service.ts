@@ -16,6 +16,7 @@ import { randomBytes } from 'crypto';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../../utils/errors';
 import { normalizeIndianPhone } from '../../utils/phone';
 import { toFixed2 } from '../../utils/decimal';
+import type { PhoneOrderListResponse } from './order.types';
 import {
   CUSTOMER_CONFIRMATION_TEMPLATE,
   dispatchOrderNotifications,
@@ -28,11 +29,17 @@ import {
   findAdminOrders,
   findOrderByIdempotencyKey,
   findOrderByToken,
+  findOrdersByPhone,
   findQuoteItems,
   findRestaurantPricing,
   placeOrder,
   updateOrderStatusTx,
 } from './order.repository';
+import {
+  decodeOrderPhoneCursor,
+  encodeOrderPhoneCursor,
+  type PhoneOrderListQuery,
+} from './order.validation';
 
 const logger = createChildLogger({ module: 'orders' });
 import { computeQuote } from './pricing.service';
@@ -403,6 +410,31 @@ export async function getInvoice(publicToken: string): Promise<InvoiceResponse> 
     total: toFixed2(row.total.toString()),
     paymentMethod: row.paymentMethod,
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+/**
+ * GET /orders/phone/:phone (issue #43): the customer's own orders, current
+ * (NEW → OUT_FOR_DELIVERY) before terminal, newest first inside each group,
+ * with an opaque cursor so the enumerable list stays bounded.
+ */
+export async function getOrdersByPhone(
+  phone: string,
+  query: PhoneOrderListQuery,
+): Promise<PhoneOrderListResponse> {
+  const cursor = query.cursor ? decodeOrderPhoneCursor(query.cursor) : null;
+  const { rows, nextCursor } = await findOrdersByPhone(phone, query.limit, cursor);
+  return {
+    items: rows.map((row) => ({
+      orderNumber: row.orderNumber,
+      publicToken: row.publicToken,
+      status: row.status,
+      orderType: row.orderType,
+      itemCount: row.items.reduce((sum, item) => sum + item.quantity, 0),
+      total: toFixed2(row.total.toString()),
+      createdAt: row.createdAt.toISOString(),
+    })),
+    nextCursor: nextCursor ? encodeOrderPhoneCursor(nextCursor) : null,
   };
 }
 
