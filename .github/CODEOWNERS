@@ -7,28 +7,27 @@
 # ============================================================
 #
 # Reviewer 1: @Rajal-ui
-# Reviewer 2: @piyushkrr24
 # ============================================================
 
 # --- Global fallback: all files ---
-*                               @Rajal-ui @piyushkrr24
+*                               @Rajal-ui
 
 # --- GitHub config & CI ---
-.github/                        @Rajal-ui @piyushkrr24
+.github/                        @Rajal-ui
 
 # --- Customer-facing frontend ---
-apps/customer/                  @Rajal-ui @piyushkrr24
+apps/customer/                  @Rajal-ui
 
 # --- Admin panel ---
-apps/admin/                     @Rajal-ui @piyushkrr24
+apps/admin/                     @Rajal-ui
 
 # --- Shared design tokens & packages ---
-packages/                       @Rajal-ui @piyushkrr24
+packages/                       @Rajal-ui
 
 # --- Documentation ---
-docs/                           @Rajal-ui @piyushkrr24
+docs/                           @Rajal-ui
 
 # --- Root config files ---
-*.json                          @Rajal-ui @piyushkrr24
-*.md                            @Rajal-ui @piyushkrr24
-.gitignore                      @Rajal-ui @piyushkrr24
+*.json                          @Rajal-ui
+*.md                            @Rajal-ui
+.gitignore                      @Rajal-ui
